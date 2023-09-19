@@ -61,16 +61,59 @@ const allTimeOverUnder = {
   Sujay: [],
   Sumanth: [],
 };
+
 const updateData = (allTimeOverUnder, team, won, setData) => {
+  // console.log("hi")
   let len = allTimeOverUnder[team].length;
-  if (allTimeOverUnder[team].length == 0) {
-    allTimeOverUnder[team].push(0);
-    len++;
+  if (len===0){
+    allTimeOverUnder[team].push(won);
   }
-  allTimeOverUnder[team].push(allTimeOverUnder[team][len - 1] + won);
-  console.log(allTimeOverUnder);
-  if (allTimeOverUnder[team].length == 11) setData(allTimeOverUnder);
+  else allTimeOverUnder[team].push(allTimeOverUnder[team][len - 1] + won);
 };
+const addSeasonalData= async (startWeek,endWeek,year,myClient,setData)=>{
+  for (let week = startWeek; week <= endWeek; week++) {
+    const weeklyScores = {
+      Chubs: 0,
+      Waff: 0,
+      Rohan: 0,
+      Santosh: 0,
+      Romo: 0,
+      Arhan: 0,
+      Keg: 0,
+      Avi: 0,
+      Ved: 0,
+      Sujay: 0,
+      Sumanth: 0,
+    };
+    try {
+      const teams = await myClient.getHistoricalScoreboardForWeek({
+        seasonId: year,
+        matchupPeriodId: week,
+        scoringPeriodId: week,
+      });
+
+      // console.log(year, week);
+
+      teams.forEach((matchup) => {
+        const homeTeam = teamIDs[year][matchup.homeTeamId];
+        const awayTeam = teamIDs[year][matchup.awayTeamId];
+
+        if (matchup.homeScore > matchup.awayScore) {
+          weeklyScores[homeTeam] = 1;
+          weeklyScores[awayTeam] = -1;
+        } else {
+          weeklyScores[homeTeam] = -1;
+          weeklyScores[awayTeam] = 1;
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+    for (const team in weeklyScores) {
+      updateData(allTimeOverUnder, team, weeklyScores[team], setData);
+    }
+  }
+}
 const WinLoss = () => {
   const [data, setData] = useState(null);
 
@@ -79,46 +122,11 @@ const WinLoss = () => {
     const initClient = async () => {
       const { Client } = await import("espn-fantasy-football-api");
       const myClient = new Client({ leagueId: 91791069 });
-      for (let i = 3; i <= 12; i++) {
-        const weeklyScores = {
-          Chubs: 0,
-          Waff: 0,
-          Rohan: 0,
-          Santosh: 0,
-          Romo: 0,
-          Arhan: 0,
-          Keg: 0,
-          Avi: 0,
-          Ved: 0,
-          Sujay: 0,
-          Sumanth: 0,
-        };
-        myClient
-          .getHistoricalScoreboardForWeek({
-            seasonId: 2019,
-            matchupPeriodId: i,
-            scoringPeriodId: i,
-          })
-          .then((teams) => {
-            teams.forEach((matchup) => {
-              const homeTeam = teamIDs[2019][matchup.homeTeamId];
-              const awayTeam = teamIDs[2019][matchup.awayTeamId];
-              if (matchup.homeScore > matchup.awayScore) {
-                weeklyScores[homeTeam] = 1;
-                weeklyScores[awayTeam] = -1;
-              } else {
-                weeklyScores[homeTeam] = -1;
-                weeklyScores[awayTeam] = 1;
-              }
-            });
-            for (const team in weeklyScores) {
-              updateData(allTimeOverUnder, team, weeklyScores[team], setData);
-            }
-          })
-          .catch((error) => {
-            console.error("Error fetching data:", error);
-          });
-      }
+      await addSeasonalData(3,12,2019,myClient,setData);
+      await addSeasonalData(1,12,2020,myClient,setData);
+      await addSeasonalData(1,14,2021,myClient,setData);
+      setData(allTimeOverUnder);
+      // console.log(allTimeOverUnder);
     };
     initClient();
   }, []);
