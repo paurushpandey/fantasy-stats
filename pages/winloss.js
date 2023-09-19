@@ -1,5 +1,6 @@
 // pages/fantasyData.tsx
 import React, { useEffect, useState } from "react";
+import LineGraph from "../components/LineGraph";
 
 const teamIDs = {
   2019: {
@@ -92,7 +93,7 @@ const addSeasonalData= async (startWeek,endWeek,year,myClient,setData)=>{
         scoringPeriodId: week,
       });
 
-      // console.log(year, week);
+      console.log(year, week);
 
       teams.forEach((matchup) => {
         const homeTeam = teamIDs[year][matchup.homeTeamId];
@@ -134,7 +135,8 @@ const WinLoss = () => {
   return (
     <div>
       <h1>Fantasy Football Data</h1>
-      {data ? <pre>{JSON.stringify(data, null, 2)}</pre> : <p>Loading...</p>}
+      {/* {data ? <pre>{JSON.stringify(data, null, 2)}</pre> : <p>Loading...</p>} */}
+      {data ? <LineGraph data={allTimeOverUnder} /> : <p>Loading...</p>}
     </div>
   );
 };
